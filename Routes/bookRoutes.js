@@ -68,6 +68,16 @@ router.get('/reservations', async (
     }
 });
 
+router.get('/getBorrowedBooks', async (req, res) => {
+    try {
+        const borrowedBooks = await Book.find({ borrowedBy: { $ne: [], $exists: true } })
+            .populate('borrowedBy', 'name email')
+            .populate('copies', 'copyNumber status condition purchaseDate')
+        res.send(borrowedBooks)
+    } catch (error) { 
+        res.status(500).json({ error: error.message })
+    }
+})
 router.get('/book/details', async (req, res) => {
     try {
         const bookId = req.query.id;
