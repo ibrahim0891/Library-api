@@ -4,6 +4,7 @@ const express = require('express');
 const userRouter = express.Router();
 
 const { Book, User, Copies, Reserve } = require('../Database/models');
+const { sendEmail } = require('../Utilities/mailer');
 
 
 //User UserRouter 
@@ -73,16 +74,39 @@ userRouter.post('/user', async (req, res) => {
         const user = await User.create({
             name: req.body.name,
             email: req.body.email,
-            password: req.body.password
+            password: req.body.password, 
+            address: req.body.address,
+            phoneNumber: req.body.phoneNumber,
+            avater: req.body.avater,
+            department: req.body.department,
+            semester: req.body.semester,
+            shift: req.body.shift,
+            roll: req.body.roll
         });
+        //send  email to user
+        sendEmail(user.email, 'Welcome to Library Management System', `Dear ${user.name}, Welcome to Library Management System , your password is ${user.password}. Please keep it safe. Visit: https://localhost:5714 to login`);
         res.status(201).send(user);
+
     } catch (err) {
         res.status(400).send({ message: err.message });
     }
 });
 
-userRouter.put('/user') //this is not seems to be required as we are not updating user details
-
+userRouter.post('/updateUser', async function (req, res) {  
+    try {
+        if (!req.query.id) {
+            return res.status(400).send({ message: 'User ID is required' });
+        }
+        const updateUserData = req.body;
+        const updatedUser = await User.updateOne({ _id: req.query.id }, updateUserData);
+        if (!updatedUser.matchedCount) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+        res.send({ message: 'User updated successfully' });
+    } catch (err) {
+        res.status(500).send({ message: err.message });
+    }
+});
 userRouter.delete('/user', async function (req, res) {
     const user = await User.findByIdAndDelete(req.params.id);
     const reserve = await Reserve.deleteMany({ userID: req.params.id });

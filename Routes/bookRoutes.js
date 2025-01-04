@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { Book, User, Copies, Reserve } = require('../Database/models');
+const cloudinary = require('cloudinary').v2;
 
 router.get('/statistics', async (req, res) => {
     try {
@@ -74,7 +75,7 @@ router.get('/getBorrowedBooks', async (req, res) => {
             .populate('borrowedBy', 'name email')
             .populate('copies', 'copyNumber status condition purchaseDate')
         res.send(borrowedBooks)
-    } catch (error) { 
+    } catch (error) {  
         res.status(500).json({ error: error.message })
     }
 })
@@ -169,19 +170,11 @@ router.get('/books/search', async function (req, res) {
 router.post('/books', async function (req, res) {
 
     const bookData = req.body;
-    // const bookData = {
-    //     title: 'Pride and Prejudice',
-    //     author: 'Jane Austen',
-    //     reserverList: [],
-    //     borrowedBy: [],
-    //     copies: [],
-    //     numCopies: 3,
-    // }
 
     const copiesIds = [];
-    const numCopies = bookData.numCopies;
+    const copies = bookData.copies;
 
-    for (let i = 0; i < numCopies; i++) {
+    for (let i = 0; i < copies; i++) {
         const copy = new Copies({
             status: 'available',
             borrowedBy: null,
@@ -220,23 +213,40 @@ router.put('/books', async function (req, res) {
 });
 
 
-router.delete('/books', async function (req, res) {
+router.delete('/deleteBook', async function (req, res) {
     //later will be req.params.id
-    const bookId = req.body.bookId;
+    const bookId = req.query.id;
     // const bookId = '67690bac35433bc2458882e4';
     try {
         const bookExists = await Book.findById(bookId);
         if (!bookExists) {
-            return res.status(404).send("Book not found");
+            return res.status(404).send({message: "Book not found"});
         }
 
+        const copies = await Copies.find({ bookId: bookId });
+        for (const copy of copies) {
+            if (copy.status === 'borrowed' || copy.status === 'reserved') {
+                return res.status(400).send({message: "Cannot delete book as it has copies that are borrowed or reserved"});
+            }
+        }
+        
         await Book.deleteOne({ _id: bookId });
         await Copies.deleteMany({ bookId: bookId });
-        res.status(200).send("Book and associated copies deleted successfully");
+
+        res.status(200).send({message : "Book and associated copies deleted successfully"});
     } catch (error) {
         console.error("Error deleting book:", error);
-        res.status(500).send("Error occurred while deleting the book");
+        res.status(500).send({ message: "Error deleting book" });
     }
+})
+
+
+router.post('/updateBook', async function (req, res) { 
+    const book = await Book.findById(req.query.id); 
+    console.log(req.query.id);
+    const updatedBookData = req.body;
+    await Book.updateOne({ _id: req.query.id }, updatedBookData);
+    res.send(book);
 });
 
-module.exports = router;
+module.exports = router; 

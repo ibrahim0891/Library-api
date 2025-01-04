@@ -27,6 +27,7 @@ const bookSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Reserve'
     }],
+    coverImage: { type: String }, // URL of the book cover image
     borrowedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     copies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Copies' }],
     summary: { type: String }, // Brief description of the book
@@ -61,6 +62,7 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin'],
         default: 'user' // Differentiate between normal users and administrators
     },
+    avater: { type: String },
     borrowedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Copies' }],
     reservedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Reserve' }],
     finesDue: { type: Number, default: 0 }, // Penalties for late returns
@@ -69,6 +71,10 @@ const userSchema = new mongoose.Schema({
     membershipDate: { type: Date, default: Date.now }, // When they joined the library
     isActive: { type: Boolean, default: true }, // Track if a user account is active
     token: { type: String },
+    shift: { type: String },
+    semester: { type: String },
+    department: { type: String },
+    roll: { type: String },
 });
 
 
