@@ -202,7 +202,7 @@ router.put('/books', async function (req, res) {
     //     title: 'To Kill a Mockingbird',
     //     author: 'Harper Lee',
     // }
-    const bookId = '6768fd07a35c3aeb0e1d6692'; // later will be req.params.id
+    const bookId = req.params.id ; // later will be req.params.id
     const book = await Book.findById(bookId);
     book.title = updatedBookData.title;
     book.author = updatedBookData.author;
